@@ -101,11 +101,14 @@ export function InterviewScreen({
         { question: currentQuestion, response: combinedResponse },
       ]);
       if (result.data.followUpQuestion && questionQueue.length < MAX_QUESTIONS) {
-        setQuestionQueue((prev) => [
-          ...prev.slice(0, currentQuestionIndex + 1),
-          result.data.followUpQuestion,
-          ...prev.slice(currentQuestionIndex + 1),
-        ]);
+        const followUp = result.data.followUpQuestion.trim();
+        if (followUp) {  // Ensure it's not an empty string
+          setQuestionQueue((prev) => [
+            ...prev.slice(0, currentQuestionIndex + 1),
+            followUp,
+            ...prev.slice(currentQuestionIndex + 1),
+          ]);
+        }
       }
     } else {
       // Handle error

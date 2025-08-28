@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/card';
 import { startInterviewAction } from '@/app/dashboard/actions';
 import { useToast } from '@/hooks/use-toast';
-import type { GenerateInterviewQuestionsOutput } from '@/ai/flows/generate-performance-report';
+import type { GenerateInterviewQuestionsOutput } from '@/ai/flows/generate-interview-questions';
 import type { GenerateInterviewQuestionsInput } from '@/ai/flows/generate-interview-questions';
 import { Loader2 } from 'lucide-react';
 

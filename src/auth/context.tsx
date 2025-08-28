@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useMemo,
   type ReactNode,
 } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
@@ -24,19 +25,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Set up the auth state observer
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
     });
 
+    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    user,
+    loading
+  }), [user, loading]);
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
-      {children}
+    <AuthContext.Provider value={contextValue}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
