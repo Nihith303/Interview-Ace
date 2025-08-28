@@ -25,7 +25,8 @@ import { startInterviewAction } from '@/app/dashboard/actions';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateInterviewQuestionsOutput } from '@/ai/flows/generate-interview-questions';
 import type { GenerateInterviewQuestionsInput } from '@/ai/flows/generate-interview-questions';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload, FileText } from 'lucide-react';
+import { useCallback, useState } from 'react';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_FILE_TYPES = [
@@ -67,6 +68,42 @@ const fileToDataUri = (file: File): Promise<string> => {
 
 export function SetupForm({ onInterviewStart }: SetupFormProps) {
   const { toast } = useToast();
+  const [isDragging, setIsDragging] = useState(false);
+  const [fileName, setFileName] = useState<string | null>(null);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setIsDragging(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, onChange: (files: FileList | null) => void) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      setFileName(files[0].name);
+      onChange(files);
+    }
+  }, []);
+
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>, onChange: (files: FileList | null) => void) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setFileName(files[0].name);
+      onChange(files);
+    }
+  }, []);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -101,27 +138,28 @@ export function SetupForm({ onInterviewStart }: SetupFormProps) {
   }
 
   return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle className="font-headline text-2xl">
+    <Card className="w-full max-w-2xl shadow-lg transition-all hover:shadow-xl">
+      <CardHeader className="space-y-3">
+        <CardTitle className="font-headline text-3xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
           Prepare for your interview
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-base text-muted-foreground">
           Fill in the details below to start your personalized practice session.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-1">
               <FormField
                 control={form.control}
                 name="role"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Target Role</FormLabel>
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-sm font-medium text-foreground/80">Target Role</FormLabel>
                     <FormControl>
                       <Input
+                        className="h-11 focus-visible:ring-2 focus-visible:ring-primary/50 transition-colors"
                         placeholder="e.g., Senior Software Engineer"
                         {...field}
                       />
@@ -134,10 +172,14 @@ export function SetupForm({ onInterviewStart }: SetupFormProps) {
                 control={form.control}
                 name="company"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company</FormLabel>
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-sm font-medium text-foreground/80">Company</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Google" {...field} />
+                      <Input 
+                        className="h-11 focus-visible:ring-2 focus-visible:ring-primary/50 transition-colors"
+                        placeholder="e.g., Google" 
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -149,35 +191,92 @@ export function SetupForm({ onInterviewStart }: SetupFormProps) {
               name="resume"
               render={({ field: { onChange, value, ...rest } }) => (
                 <FormItem>
-                  <FormLabel>Your Resume</FormLabel>
+                  <FormLabel className="text-sm font-medium text-foreground/80">Your Resume</FormLabel>
                   <FormControl>
-                    <Input
-                      type="file"
-                      accept=".pdf,.docx"
-                      onChange={(e) => {
-                        onChange(e.target.files);
-                      }}
-                      {...rest}
-                    />
+                    <div 
+                      className={`mt-1.5 flex flex-col items-center justify-center px-6 pt-6 pb-7 border-2 border-dashed rounded-lg transition-all duration-200 ${isDragging ? 'border-primary bg-primary/5 scale-[1.01] shadow-sm' : 'border-border hover:border-primary/50'} cursor-pointer group`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, (files) => {
+                        if (files && files.length > 0) {
+                          const fileList = new DataTransfer();
+                          fileList.items.add(files[0]);
+                          onChange(fileList.files);
+                        }
+                      })}
+                      onClick={() => document.getElementById('resume-upload-input')?.click()}
+                    >
+                      <div className="space-y-3 text-center">
+                        {fileName ? (
+                          <div className="flex flex-col items-center">
+                            <FileText className="h-10 w-10 text-primary" />
+                            <p className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {fileName}
+                            </p>
+                            <button
+                              type="button"
+                              className="mt-2 text-sm font-medium text-primary hover:text-primary/80 hover:underline underline-offset-2 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setFileName(null);
+                                onChange(null);
+                              }}
+                            >
+                              Change file
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="p-3 rounded-full bg-primary/5 group-hover:bg-primary/10 transition-colors mb-2">
+                              <Upload className={`h-6 w-6 ${isDragging ? 'text-primary' : 'text-muted-foreground/70 group-hover:text-primary transition-colors'}`} />
+                            </div>
+                            <div className="flex flex-col items-center text-sm">
+                              <span className="font-medium text-foreground/90 group-hover:text-foreground transition-colors">
+                                Click to upload or drag and drop
+                              </span>
+                              <p className="text-xs text-muted-foreground/80 mt-1.5">
+                                PDF or DOCX (max. 5MB)
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <input
+                        id="resume-upload-input"
+                        type="file"
+                        accept=".pdf,.docx"
+                        className="hidden"
+                        onChange={(e) => handleFileChange(e, (files) => {
+                          if (files && files.length > 0) {
+                            const fileList = new DataTransfer();
+                            fileList.items.add(files[0]);
+                            onChange(fileList.files);
+                          }
+                        })}
+                        {...rest}
+                      />
+                    </div>
                   </FormControl>
-                  <FormDescription>
-                    Upload your resume (.pdf, .docx) for tailored questions. Max
-                    5MB.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating Questions...
-                </>
-              ) : (
-                'Start Interview'
-              )}
-            </Button>
+            <div className="flex justify-end pt-2">
+              <Button 
+                type="submit" 
+                disabled={form.formState.isSubmitting}
+                className="h-11 px-8 text-base font-medium transition-all hover:shadow-lg hover:shadow-primary/10"
+              >
+                {form.formState.isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generating Questions...
+                  </>
+                ) : (
+                  'Start Interview'
+                )}
+              </Button>
+            </div>
           </form>
         </Form>
       </CardContent>

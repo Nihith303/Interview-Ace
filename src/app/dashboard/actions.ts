@@ -106,8 +106,7 @@ type GetReportActionInput = GeneratePerformanceReportInput & { userId: string };
 
 async function saveReportToFirestore(userId: string, reportData: GeneratePerformanceReportOutput, inputData: Omit<GetReportActionInput, 'resume' | 'questions' | 'responses' | 'userId'>) {
     try {
-        await addDoc(collection(db, 'reports'), {
-            userId: userId,
+        await addDoc(collection(db, `users/${userId}/reports`), {
             ...inputData,
             ...reportData,
             createdAt: serverTimestamp(),

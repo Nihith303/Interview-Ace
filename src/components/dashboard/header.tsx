@@ -35,14 +35,20 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/80 backdrop-blur-sm">
-      <div className="container flex h-16 items-center">
+      <div className="container flex h-16 items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <Bot className="h-8 w-8 text-primary" />
-          <span className="text-xl font-bold font-headline text-primary">
-            Interview Ace
-          </span>
+          <img 
+            src="/Interview Ace.svg" 
+            alt="Interview Ace Logo" 
+            className="h-12 w-40"
+          />
         </Link>
-        <div className="flex flex-1 items-center justify-end space-x-4">
+        <div className="flex items-center gap-4">
+          {user?.displayName && (
+            <div className="text-sm text-muted-foreground">
+              Welcome back, <span className="font-medium text-foreground">{user.displayName.split(' ')[0]}</span>!
+            </div>
+          )}
           <nav className="flex items-center space-x-1">
             {user && (
               <DropdownMenu>
@@ -51,8 +57,8 @@ export default function Header() {
                     variant="ghost"
                     className="relative h-8 w-8 rounded-full"
                   >
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
+                    <Avatar className="h-8 w-8 bg-orange-500 text-white">
+                      <AvatarFallback className="bg-orange-500">
                         {getInitials(user.displayName)}
                       </AvatarFallback>
                     </Avatar>

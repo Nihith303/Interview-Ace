@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Header from '@/components/dashboard/header';
 import { useAuth } from '@/auth/context';
+import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import {
   Card,
@@ -32,6 +33,7 @@ import { format } from 'date-fns';
 
 type Report = {
   id: string;
+  userId: string;
   role: string;
   company: string;
   confidence: number;
@@ -59,8 +61,7 @@ export default function ScoresPage() {
         setIsLoadingReports(true);
         const reportsRef = collection(db, 'reports');
         const q = query(
-          reportsRef,
-          where('userId', '==', user.uid),
+          collection(db, `users/${user.uid}/reports`),
           orderBy('createdAt', 'desc')
         );
         const querySnapshot = await getDocs(q);
@@ -98,11 +99,44 @@ export default function ScoresPage() {
           </CardHeader>
           <CardContent>
             {isLoadingReports ? (
-              <p>Loading reports...</p>
+              <div className="flex items-center justify-center py-12">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                  <p className="text-muted-foreground">Loading your interview history...</p>
+                </div>
+              </div>
             ) : reports.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                You haven&apos;t completed any interviews yet.
-              </p>
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                <div className="rounded-full bg-primary/10 p-4 mb-4">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-primary"
+                  >
+                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="12" y1="18" x2="12" y2="12" />
+                    <line x1="9" y1="15" x2="15" y2="15" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-foreground mb-2">No Interview Data Yet</h3>
+                <p className="text-muted-foreground max-w-md">
+                  You haven&apos;t completed any interviews yet. Start practicing to see your performance metrics here.
+                </p>
+                <Button 
+                  className="mt-6" 
+                  onClick={() => router.push('/dashboard')}
+                >
+                  Start Practicing
+                </Button>
+              </div>
             ) : (
               <Table>
                 <TableHeader>
