@@ -28,8 +28,8 @@ Interview Ace is your personal AI-powered interview coach. It's designed to help
 
 1.  **Clone the repository:**
     ```bash
-    git clone <repository-url>
-    cd <repository-name>
+    git clone https://github.com/Nihith303/Interview-Ace.git
+    cd Interview-Ace
     ```
 
 2.  **Install dependencies:**
